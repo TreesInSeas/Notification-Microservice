@@ -43,3 +43,38 @@ def home():
             "PATCH /notifications/<notification_id>/read"
         ]
     })
+@app.route("/notifications", methods=["GET"])
+def get_notifications():
+    user_id = request.args.get("user_id")
+    status = request.args.get("status")
+    priority = request.args.get("priority")
+
+    if not user_id:
+        return error_response("Missing required parameter: user_id")
+
+    if status and status not in VALID_STATUSES:
+        return error_response("Invalid status. Use 'read' or 'unread'.")
+
+    if priority and priority not in VALID_PRIORITIES:
+        return error_response("Invalid priority. Use 'High', 'Medium', or 'Low'.")
+
+    notifications = load_notifications()
+
+    results = [
+        notification for notification in notifications
+        if str(notification.get("user_id")) == str(user_id)
+    ]
+
+    if status:
+        results = [notification for notification in results if notification.get("status") == status]
+
+    if priority:
+        results = [notification for notification in results if notification.get("priority") == priority]
+
+    # User story requirement: High priority notifications should appear first.
+    results.sort(key=lambda item: (PRIORITY_ORDER.get(item.get("priority"), 99), item.get("due_date", "")))
+
+    return jsonify({
+        "success": True,
+        "notifications": results
+    }), 200
