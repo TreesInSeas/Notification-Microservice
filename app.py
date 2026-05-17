@@ -21,3 +21,13 @@ def load_notifications():
             return json.load(file)
     except json.JSONDecodeError:
         return []
+
+def save_notifications(notifications):
+    with DATA_FILE.open("w", encoding="utf-8") as file:
+        json.dump(notifications, file, indent=2)
+
+
+def get_next_id(notifications):
+    if not notifications:
+        return 1
+    return max(notification["id"] for notification in notifications) + 1
