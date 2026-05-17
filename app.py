@@ -31,3 +31,15 @@ def get_next_id(notifications):
     if not notifications:
         return 1
     return max(notification["id"] for notification in notifications) + 1
+
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({
+        "success": True,
+        "service": "Notification Microservice",
+        "endpoints": [
+            "GET /notifications?user_id=<id>",
+            "POST /notifications",
+            "PATCH /notifications/<notification_id>/read"
+        ]
+    })
