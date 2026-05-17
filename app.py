@@ -78,3 +78,40 @@ def get_notifications():
         "success": True,
         "notifications": results
     }), 200
+
+@app.route("/notifications", methods=["POST"])
+def create_notification():
+    data = request.get_json(silent=True)
+
+    if not data:
+        return error_response("Request body must be valid JSON.")
+
+    required_fields = ["user_id", "title", "due_date", "priority", "message"]
+    missing_fields = [field for field in required_fields if field not in data]
+
+    if missing_fields:
+        return error_response(f"Missing required field(s): {', '.join(missing_fields)}")
+
+    if data["priority"] not in VALID_PRIORITIES:
+        return error_response("Invalid priority. Use 'High', 'Medium', or 'Low'.")
+
+    notifications = load_notifications()
+
+    new_notification = {
+        "id": get_next_id(notifications),
+        "user_id": str(data["user_id"]),
+        "title": str(data["title"]),
+        "due_date": str(data["due_date"]),
+        "priority": data["priority"],
+        "status": "unread",
+        "message": str(data["message"]),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+
+    notifications.append(new_notification)
+    save_notifications(notifications)
+
+    return jsonify({
+        "success": True,
+        "notification": new_notification
+    }), 201
