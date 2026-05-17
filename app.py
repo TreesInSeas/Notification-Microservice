@@ -115,3 +115,40 @@ def create_notification():
         "success": True,
         "notification": new_notification
     }), 201
+
+@app.route("/notifications/<int:notification_id>/read", methods=["PATCH"])
+def mark_notification_as_read(notification_id):
+    """Mark a notification as read."""
+    notifications = load_notifications()
+
+    for notification in notifications:
+        if notification.get("id") == notification_id:
+            notification["status"] = "read"
+            notification["read_at"] = datetime.now(timezone.utc).isoformat()
+            save_notifications(notifications)
+            return jsonify({
+                "success": True,
+                "notification": notification
+            }), 200
+
+    return error_response("Notification not found.", 404)
+
+
+@app.route("/notifications/<int:notification_id>", methods=["DELETE"])
+def delete_notification(notification_id):
+    """Optional helper endpoint for testing and cleanup."""
+    notifications = load_notifications()
+    new_notifications = [
+        notification for notification in notifications
+        if notification.get("id") != notification_id
+    ]
+
+    if len(new_notifications) == len(notifications):
+        return error_response("Notification not found.", 404)
+
+    save_notifications(new_notifications)
+    return jsonify({"success": True, "message": "Notification deleted."}), 200
+
+
+if __name__ == "__main__":
+    app.run(host="127.0.0.1", port=5000, debug=True)
